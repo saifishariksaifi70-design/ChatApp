@@ -4,6 +4,8 @@ import { FaSearchengin } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import userConversation from "../../zustand/useConversation";
+import { IoLogInOutline, IoSettingsOutline } from "react-icons/io5";
 
 function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
     const navigate = useNavigate();
@@ -11,8 +13,9 @@ function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
     const [searchInput, setSearchInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [chatUser, setChatUser] = useState([]);
-    const [selectedUserId, setSelectedUserId] = useState(null);
+    // const [selectedUserId, setSelectedUserId] = useState(null);
     const [showLogout, setShowLogout] = useState(false)
+    const {messages, selectedConversation, setSelectedConversation} = userConversation();
 
     useEffect(() => {
         const chatUserHandler = async () => {
@@ -93,11 +96,14 @@ function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
     };
 
     const handleUserClick = (user) => {
-        setSelectedUserId(user._id);
+        
         setSelectedUser(user);
+        setSelectedConversation(user)
     };
 
-    const usersToShow = searchUser?.length > 0 ? searchUser : chatUser;
+    const usersToShow = (searchUser?.length > 0 ? searchUser : chatUser).filter(
+        (user)=> String(user._id) !== String(authUser?._id)
+    )
     const handleLogoutUser = async()=>{
         try {
             const res = await axios.post(
@@ -123,8 +129,8 @@ function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
             <div className="h-16 px-5 flex items-center justify-between border-b">
                 <h1 className="text-xl font-bold text-purple-600">ChatApp</h1>
                 <button onClick={() => setShowLogout(true)} 
-                className="text-gray-500 hover:text-purple-600">
-                    ⚙️
+                className="text-gray-500 hover:text-purple-600 cursor-pointer">
+                     <IoLogInOutline size={30}/>
                 </button>
                 {showLogout && (
                     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -201,7 +207,8 @@ function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
                         <div
                             key={user._id}
                             onClick={() => handleUserClick(user)}
-                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition duration-200 hover:bg-gray-100 ${selectedUserId === user._id ? "bg-purple-300" : ""}`}
+                            className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition duration-200 hover:bg-gray-100 
+                                ${selectedUser?._id === user._id ? "bg-purple-300" : ""}`}
                         >
                             <img
                                 src={user.profilepic}

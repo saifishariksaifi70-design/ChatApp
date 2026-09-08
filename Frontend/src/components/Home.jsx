@@ -1,42 +1,59 @@
 import React, { useState } from 'react'
 import { useAuth } from './context/AuthContext'
-import Sidebar from './pages/Sidebar';
-import Message from './pages/Message';
-
+import Sidebar from './pages/Sidebar'
+import Message from './pages/Message'
 
 function Home() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [searchUser, setSearchUser] = useState([])
-  const { authUser } = useAuth();
+  const { authUser } = useAuth()
 
-  const moveUserTop = (user)=>{
-    setSearchUser((prev)=>{
-      const filteredUser = prev.find(
-        (item)=> item._id === user._id
-        );
-        return [user,...filteredUser]
+  const moveUserTop = (user) => {
+    setSearchUser((prev) => {
+      const filteredUser = prev.filter(
+        (item) => item._id !== user._id
+      )
 
+      return [user, ...filteredUser]
     })
-
   }
+
   return (
-    <div className='h-screen w-full flex justify-center items-center bg-white'>
-     <div className='w-full max-w-7xl h-[90vh] flex'>
-       <div className='w-[35%] border-r border-gray-300'>
-        <Sidebar 
-        searchUser={searchUser}
-        setSearchUser={setSearchUser}
-        selectedUser={selectedUser}
-        setSelectedUser={setSelectedUser}
-        />
+    <div className="h-screen w-full bg-white">
+
+      <div className="w-full h-full max-w-7xl mx-auto flex overflow-hidden">
+
+        {/* Sidebar */}
+        <div
+          className={`
+            h-full w-full md:w-[35%] md:block
+            ${selectedUser ? 'hidden' : 'block'}
+          `}
+        >
+          <Sidebar
+            searchUser={searchUser}
+            setSearchUser={setSearchUser}
+            selectedUser={selectedUser}
+            setSelectedUser={setSelectedUser}
+          />
+        </div>
+
+        {/* Message */}
+        <div
+          className={`
+            h-full w-full md:w-[65%] md:block
+            ${selectedUser ? 'block' : 'hidden'}
+          `}
+        >
+          <Message
+            selectedUser={selectedUser}
+            moveUserTop={moveUserTop}
+            setSelectedUser={setSelectedUser}
+          />
+        </div>
+
       </div>
-      <div className='w-[65%]'>
-        <Message 
-        selectedUser={selectedUser}
-        moveUserTop={moveUserTop}
-        />
-      </div>
-     </div>
+
     </div>
   )
 }
