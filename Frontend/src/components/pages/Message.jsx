@@ -3,14 +3,43 @@ import { useAuth } from "../context/AuthContext";
 import { IoArrowBack, IoSend } from "react-icons/io5";
 import userConversation from "../../zustand/useConversation";
 import axios from "axios";
+import { useSocketContext } from "../context/SocketContext";
 
-function Message({ selectedUser, setSelectedUser }) {
-    const {messages, setMessages, selectedConversation, setSelectedConversation} = userConversation();
+function Message({ selectedUser, setSelectedUser, moveUserTop }) {
+    const {messages, setMessages, selectedConversation, setSelectedConversation, increaseUnread} = userConversation();
+    const {socket,onlineUser} = useSocketContext()
     const { authUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false)
     const [sendData, setSendData] = useState("")
     const lastmessageRef = useRef();
+    
+
+    useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessages = (newMessage) => {
+        const senderId = String(newMessage.senderId);
+        const currentUserId = String(selectedConversation?._id);
+
+        if (senderId === currentUserId) {
+            setMessages((prev) => [...prev, newMessage]);
+        } else {
+            increaseUnread(senderId);
+        }
+    };
+
+    socket.on("newMessage", handleNewMessages);
+
+    return () => {
+        socket.off("newMessage", handleNewMessages);
+    };
+}, [
+    socket,
+    selectedConversation?._id,
+    setMessages,
+    increaseUnread
+]);
 
     useEffect(()=>{
         setTimeout(()=>{
@@ -60,6 +89,7 @@ function Message({ selectedUser, setSelectedUser }) {
             setSending(false)
             setSendData('')
             setMessages([...messages,data])
+            moveUserTop(selectedConversation)
             
         } catch (error) {
             setSending(false)
@@ -117,8 +147,9 @@ function Message({ selectedUser, setSelectedUser }) {
                         <div>
                             <h2 className="font-semibold">{selectedConversation.username}</h2>
 
-                            <p className={`text-sm ${selectedConversation.isOnline ? "text-green-500" : "text-gray-400"}`}>
-                                {selectedConversation.isOnline ? "Online" : "Offline"}
+                            <p className={`text-sm ${onlineUser.includes(String(selectedConversation?._id)) 
+                                ? "text-green-500" : "text-gray-400"}`}>
+                                {onlineUser.includes(String(selectedConversation?._id)) ? "Online" : "Offline"}
                             </p>
                         </div>
 
@@ -138,12 +169,15 @@ function Message({ selectedUser, setSelectedUser }) {
 
     {!loading && messages?.length > 0 && messages.map((message) => (
         <div key={message?._id} ref={lastmessageRef} className="mb-2">
-            <div className={`flex ${message.senderId === authUser._id ? "justify-end" : "justify-start"}`}>
+            <div className={`flex ${String(message.senderId) === String(authUser._id) 
+                ? "justify-end" 
+                : "justify-start"}`}>
                 <div className="max-w-[70%]">
-                    <div className={`px-3 py-2 rounded-xl break-words ${message.senderId === authUser._id ? "bg-purple-500 text-white" : "bg-gray-200 text-gray-800"}`}>
+                    <div className={`px-3 py-2 rounded-xl break-words ${String(message.senderId) === String(authUser._id) ? 
+                        "bg-purple-500 text-white" : "bg-gray-200 text-gray-800"}`}>
                         {message?.message}
                     </div>
-                    {message.senderId === authUser._id && (
+                    {String(message.senderId) === String(authUser._id) && (
                         <button onClick={()=>handleDelete(message._id)}
                         className="text-xs text-red-600 mt-1 cursor-pointer">
                             Delete
@@ -151,7 +185,7 @@ function Message({ selectedUser, setSelectedUser }) {
                         </button>
                     )}
 
-                    <div className={`text-[10px] text-gray-400 mt-1 ${message.senderId === authUser._id ? "text-right" : "text-left"}`}>
+                    <div className={`text-[10px] text-gray-400 mt-1 ${String(message.senderId) === String(authUser._id) ? "text-right" : "text-left"}`}>
                         {new Date(message?.createdAt).toLocaleTimeString("en-IN", {
                             hour: "numeric",
                             minute: "2-digit"

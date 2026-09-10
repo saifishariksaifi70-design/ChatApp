@@ -1,21 +1,28 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { FaSearchengin } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import userConversation from "../../zustand/useConversation";
 import { IoLogInOutline, IoSettingsOutline } from "react-icons/io5";
+import { useSocketContext } from "../context/SocketContext";
 
-function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
+function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser, chatUser, setChatUser }) {
     const navigate = useNavigate();
     const { authUser } = useAuth();
     const [searchInput, setSearchInput] = useState("");
     const [loading, setLoading] = useState(false);
-    const [chatUser, setChatUser] = useState([]);
+    // const [chatUser, setChatUser] = useState([]);
     // const [selectedUserId, setSelectedUserId] = useState(null);
     const [showLogout, setShowLogout] = useState(false)
-    const {messages, selectedConversation, setSelectedConversation} = userConversation();
+    const {messages, selectedConversation, setSelectedConversation, clearUnread,unreadMessages} = userConversation();
+    const {onlineUser, socket} = useSocketContext()
+
+
+    const nowOnline = chatUser.map((user)=> (user._id))
+    const isOnline = nowOnline.map(userId => onlineUser.includes(String(userId)))
+
 
     useEffect(() => {
         const chatUserHandler = async () => {
@@ -99,6 +106,7 @@ function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
         
         setSelectedUser(user);
         setSelectedConversation(user)
+         clearUnread(String(user._id));
     };
 
     const usersToShow = (searchUser?.length > 0 ? searchUser : chatUser).filter(
@@ -210,18 +218,30 @@ function Sidebar({ searchUser, setSearchUser, selectedUser, setSelectedUser }) {
                             className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition duration-200 hover:bg-gray-100 
                                 ${selectedUser?._id === user._id ? "bg-purple-300" : ""}`}
                         >
-                            <img
+                            <div className={`avatar ${onlineUser.includes(String(user._id))? "online" : ""}`}> 
+                                <img
                                 src={user.profilepic}
                                 alt={user.username}
                                 className="w-11 h-11 rounded-full object-cover"
                             />
+                            </div>
 
-                            <div>
+                           <div className="flex-1">
+                             <div className="flex items-center justify-between gap-2">
                                 <h3 className="font-semibold">{user.username}</h3>
-                                <p className={`text-sm ${user.isOnline ? "text-green-500" : "text-gray-600"}`}>
-                                    {user.isOnline ? "Online" : "Offline"}
+                                {unreadMessages[String(user._id)] > 0 && (
+                                    <span className="bg-green-600 text-white text-md font-bold min-w-10 min-h-7 
+                                    h-5 px-1 rounded-full flex items-center justify-center">
+                                        +{unreadMessages[String(user._id)]}
+                                    </span>
+                                )}
+                                 </div>
+
+                                <p className={`text-sm ${onlineUser.includes(String(user._id)) ? "text-green-500" : "text-gray-600"}`}>
+                                    {onlineUser.includes(String(user._id)) ? "Online" : "Offline"}
                                 </p>
                             </div>
+                          
                         </div>
                     ))
                 )}

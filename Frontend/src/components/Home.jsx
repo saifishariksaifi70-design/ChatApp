@@ -6,6 +6,7 @@ import Message from './pages/Message'
 function Home() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [searchUser, setSearchUser] = useState([])
+  const [chatUser, setChatUser] = useState([])
   const { authUser } = useAuth()
 
   const moveUserTop = (user) => {
@@ -35,6 +36,8 @@ function Home() {
             setSearchUser={setSearchUser}
             selectedUser={selectedUser}
             setSelectedUser={setSelectedUser}
+            chatUser={chatUser}
+            setChatUser={setChatUser}
           />
         </div>
 

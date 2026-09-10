@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon backend/index.js",
-    "start": "react-scripts start"
+    "start": "react-scripts start",
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
     "mongodb": "^7.6.0",
     "mongoose": "^9.9.4",
     "nodemon": "^3.1.14",
+    "path": "^0.12.7",
     "socket.io": "^4.8.3",
     "tailwindcss": "^4.3.3"
   },

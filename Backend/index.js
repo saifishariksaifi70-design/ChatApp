@@ -9,8 +9,11 @@ import messageRouter from './root/messageRoute.js'
 import userRouter from './root/userRout.js'
 import cookieParser from 'cookie-parser';
 import cors from 'cors'
+import {app,server} from './Socket/socket.js'
+import path from 'path'
+// const app = express();
 
-const app = express();
+const __dirname = path.resolve();
 
 dns.setDefaultResultOrder('ipv4first');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
@@ -26,13 +29,19 @@ app.use('/api/auth',authRouter)
 app.use('/api/message',messageRouter)
 app.use('/api/user',userRouter)
 
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
+
+app.get("*",(req,res)=>{
+    res.sendFile(path.join(__dirname,"frontend","dist","index.html"))
+})
+
 
 app.get('/', (req, res)=>{
     res.send('server is working')
 })
 
 const PORT = process.env.PORT || 4000
-app.listen(PORT , ()=>{
+server.listen(PORT , ()=>{
     dbConnect();
     console.log(`http://localhost:${PORT}`)
 })
